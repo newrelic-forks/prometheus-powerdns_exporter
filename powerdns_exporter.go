@@ -172,8 +172,10 @@ func (e *Exporter) Describe(ch chan<- *prometheus.Desc) {
 // as Prometheus metrics. It implements prometheus.Collector.
 func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 	jsonStats := make(chan []StatsEntry)
+	done := make(chan interface{})
 
-	go e.scrape(jsonStats)
+	go e.scrape(jsonStats, done)
+	<-done
 
 	e.mutex.Lock()
 	defer e.mutex.Unlock()
@@ -183,7 +185,7 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 	e.collectMetrics(ch, jsonStats)
 }
 
-func (e *Exporter) scrape(jsonStats chan<- []StatsEntry) {
+func (e *Exporter) scrape(jsonStats chan<- []StatsEntry, done chan<- interface{}) {
 	defer close(jsonStats)
 
 	e.totalScrapes.Inc()
@@ -200,6 +202,7 @@ func (e *Exporter) scrape(jsonStats chan<- []StatsEntry) {
 
 	e.up.Set(1)
 
+	done <- struct{}{}
 	jsonStats <- data
 }
 

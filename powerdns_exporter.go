@@ -9,8 +9,11 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 	"net/url"
+	"os"
+	"os/signal"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -319,6 +322,10 @@ func main() {
 	prometheus.MustRegister(exporter)
 
 	log.Infof("Starting Server: %s", *listenAddress)
+
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
+
 	http.Handle(*metricsPath, promhttp.Handler())
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(`<html>
@@ -329,5 +336,10 @@ func main() {
              </body>
              </html>`))
 	})
-	log.Fatal(http.ListenAndServe(*listenAddress, nil))
+
+	go func() {
+		log.Fatal(http.ListenAndServe(*listenAddress, nil))
+	}()
+
+	<-stop
 }

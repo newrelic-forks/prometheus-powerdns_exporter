@@ -14,6 +14,7 @@ version:
 
 container: guard-IMAGE
 	docker build -t $(IMAGE):$(VERSION) .
+	docker tag $(IMAGE):$(VERSION) $(IMAGE):latest
 
 test:
 	go test -v ./...

@@ -1,13 +1,16 @@
-VERSION = $(shell git describe --always --tags --dirty)-jimdo
+VERSION = $(shell git describe --always --tags --dirty)
 pkgs    = $(shell go list ./... | grep -v /vendor/)
 
-.PHONY: container test build
+.PHONY: container test build version
 
 guard-%:
 	@ if [ "${${*}}" = "" ]; then \
 		echo "Environment variable $* not set"; \
 		exit 1; \
 	fi
+
+version:
+	@echo $(VERSION)
 
 container: guard-IMAGE
 	docker build -t $(IMAGE):$(VERSION) .

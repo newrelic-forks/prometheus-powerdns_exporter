@@ -174,23 +174,18 @@ func (e *Exporter) Describe(ch chan<- *prometheus.Desc) {
 // Collect fetches the stats from configured PowerDNS API URI and delivers them
 // as Prometheus metrics. It implements prometheus.Collector.
 func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
-	jsonStats := make(chan []StatsEntry)
-	done := make(chan interface{})
-
-	go e.scrape(jsonStats, done)
-	<-done
-
 	e.mutex.Lock()
 	defer e.mutex.Unlock()
+
+	stats := e.scrape()
 	ch <- e.up
 	ch <- e.totalScrapes
 	ch <- e.jsonParseFailures
-	e.collectMetrics(ch, jsonStats)
+
+	e.collectMetrics(ch, stats)
 }
 
-func (e *Exporter) scrape(jsonStats chan<- []StatsEntry, done chan<- interface{}) {
-	defer close(jsonStats)
-
+func (e *Exporter) scrape() []StatsEntry {
 	e.totalScrapes.Inc()
 
 	var data []StatsEntry
@@ -200,18 +195,15 @@ func (e *Exporter) scrape(jsonStats chan<- []StatsEntry, done chan<- interface{}
 		e.up.Set(0)
 		e.jsonParseFailures.Inc()
 		log.Errorf("Error scraping PowerDNS: %v", err)
-		return
+		return nil
 	}
 
 	e.up.Set(1)
-
-	done <- struct{}{}
-	jsonStats <- data
+	return data
 }
 
-func (e *Exporter) collectMetrics(ch chan<- prometheus.Metric, jsonStats <-chan []StatsEntry) {
+func (e *Exporter) collectMetrics(ch chan<- prometheus.Metric, stats []StatsEntry) {
 	statsMap := make(map[string]float64)
-	stats := <-jsonStats
 	for _, s := range stats {
 		statsMap[s.Name] = s.Value
 	}

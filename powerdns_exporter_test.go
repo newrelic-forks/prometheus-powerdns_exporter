@@ -88,6 +88,36 @@ func TestServerWithoutChecks(t *testing.T) {
 	}
 }
 
+func TestServerWithoutChecks_Error_BrokenJSONResult(t *testing.T) {
+	config, err := ioutil.ReadFile("test/recursor_broken_result.json")
+	if err != nil {
+		t.Fatalf("could not read config file: %v", err.Error())
+	}
+
+	h := newPowerDNS(config)
+	defer h.Close()
+
+	hostURL, _ := url.Parse(h.URL)
+
+	e := NewExporter("12345", "recursor", hostURL)
+
+	ch := make(chan prometheus.Metric)
+
+	go func() {
+		defer close(ch)
+		e.Collect(ch)
+	}()
+
+	// Check if exporter reports via the "up" metric that there was an error during the last scrape
+	if expect, got := 0., readGauge((<-ch).(prometheus.Gauge)); expect != got {
+		// up
+		t.Errorf("expected %f up, got %f", expect, got)
+	}
+	// Suck up the remaining metrics.
+	for _ = range ch {
+	}
+}
+
 func TestParseServerInfo(t *testing.T) {
 	config, err := ioutil.ReadFile("test/recursor_info.json")
 	if err != nil {

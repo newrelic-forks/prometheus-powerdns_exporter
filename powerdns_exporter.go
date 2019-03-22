@@ -218,6 +218,7 @@ func (e *Exporter) collectMetrics(ch chan<- prometheus.Metric, stats []StatsEntr
 				value = value / 1000000
 			}
 			e.gaugeMetrics[def.id].Set(value)
+			ch <- e.gaugeMetrics[def.id]
 		} else {
 			log.Errorf("Expected PowerDNS stats key not found: %s", def.key)
 			e.jsonParseFailures.Inc()

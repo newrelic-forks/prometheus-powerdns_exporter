@@ -21,6 +21,9 @@ test:
 
 build:
 	go build -v ./...
+	
+archive:
+	tar cvzf powerdns_exporter-$(VERSION).linux-amd64.tar.gz powerdns_exporter LICENSE README.md
 
 vet:
 	go vet -v $(pkgs)

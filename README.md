@@ -19,7 +19,7 @@ Name | Description | Default
 ---- | ---- | ----
 listen-address | Host:Port pair to run exporter on | `:9120`
 metric-path | Path under which to expose metrics for Prometheus | `/metrics`
-api-url | Base-URL of PowerDNS authoritative server/recursor API | `http://localhost:8001/`
+api-url | Base-URL of PowerDNS authoritative server/recursor API | `http://localhost:8081/api/v1`
 api-key | PowerDNS API Key | `-`
 
 The `api-url` flag value should be passed in this format:

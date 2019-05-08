@@ -296,7 +296,7 @@ func main() {
 	var (
 		listenAddress = flag.String("listen-address", ":9120", "Address to listen on for web interface and telemetry.")
 		metricsPath   = flag.String("metric-path", "/metrics", "Path under which to expose metrics.")
-		apiURL        = flag.String("api-url", "http://localhost:8001/", "Base-URL of PowerDNS authoritative server/recursor API.")
+		apiURL        = flag.String("api-url", "http://localhost:8081/", "Base-URL of PowerDNS authoritative server/recursor API.")
 		apiKey        = flag.String("api-key", "", "PowerDNS API Key")
 	)
 	flag.Parse()

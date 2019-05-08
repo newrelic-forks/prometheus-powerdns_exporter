@@ -27,12 +27,17 @@ The `api-url` flag value should be passed in this format:
 * PowerDNS server/recursor 3.x: `http://<HOST>:<API-PORT>/`
 * PowerDNS server/recursor 4.x: `http://<HOST>:<API-PORT>/api/v1`
 
-## Installation
+## Building
 
-Typical way of installing in Go should work.
-
-```
-go install
+```bash
+git clone https://github.com/fuze/powerdns_exporter.git
+cd powerdns_exporter
+docker run -it -v $(pwd):/data golang:1.12 /bin/bash
+cd /data
+go get github.com/prometheus/client_golang/prometheus
+go get github.com/sirupsen/logrus
+go get gopkg.in/alecthomas/kingpin.v2
+make build
 ```
 
 A Makefile is provided in case you find a need for it.
@@ -44,17 +49,11 @@ A Makefile is provided in case you find a need for it.
 Then run the exporter like this:
 
 ```bash
-go run powerdns_exporter api-url="http://<HOST>:<API-PORT>/" -api-key="<YOUR_API_KEY>"
+powerdns_exporter api-url="http://<HOST>:<API-PORT>/api/v1" -api-key="<YOUR_API_KEY>"
 ```
 
 Show help:
 
 ```bash
-go run powerdns_exporter --help
+powerdns_exporter --help
 ```
-
-## Docker
-
-To run the PowerDNS exporter as a Docker container, run:
-
-    $ docker run -p 9120:9120 janeczku/powerdns-exporter -api-url="http://<HOST>:<API-PORT>/" -api-key="<YOUR_API_KEY>"

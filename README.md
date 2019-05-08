@@ -32,8 +32,8 @@ The `api-url` flag value should be passed in this format:
 ```bash
 git clone https://github.com/fuze/powerdns_exporter.git
 cd powerdns_exporter
-docker run -it -v $(pwd):/data golang:1.12 /bin/bash
-cd /data
+docker run -it -v $(pwd):/powerdns_exporter golang:1.12 /bin/bash
+cd /powerdns_exporter
 go get github.com/prometheus/client_golang/prometheus
 go get github.com/sirupsen/logrus
 go get gopkg.in/alecthomas/kingpin.v2

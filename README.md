@@ -19,13 +19,13 @@ Name | Description | Default
 ---- | ---- | ----
 listen-address | Host:Port pair to run exporter on | `:9120`
 metric-path | Path under which to expose metrics for Prometheus | `/metrics`
-api-url | Base-URL of PowerDNS authoritative server/recursor API | `http://localhost:8081/api/v1`
+api-url | Base-URL of PowerDNS authoritative server/recursor API | `http://localhost:8081/api/v1/`
 api-key | PowerDNS API Key | `-`
 
 The `api-url` flag value should be passed in this format:
 
 * PowerDNS server/recursor 3.x: `http://<HOST>:<API-PORT>/`
-* PowerDNS server/recursor 4.x: `http://<HOST>:<API-PORT>/api/v1`
+* PowerDNS server/recursor 4.x: `http://<HOST>:<API-PORT>/api/v1/`
 
 ## Building
 
@@ -49,7 +49,7 @@ A Makefile is provided in case you find a need for it.
 Then run the exporter like this:
 
 ```bash
-powerdns_exporter api-url="http://<HOST>:<API-PORT>/api/v1" -api-key="<YOUR_API_KEY>"
+powerdns_exporter api-url="http://<HOST>:<API-PORT>/api/v1/" -api-key="<YOUR_API_KEY>"
 ```
 
 Show help:

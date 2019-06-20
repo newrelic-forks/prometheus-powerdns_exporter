@@ -49,7 +49,7 @@ A Makefile is provided in case you find a need for it.
 Then run the exporter like this:
 
 ```bash
-powerdns_exporter api-url="http://<HOST>:<API-PORT>/api/v1/" -api-key="<YOUR_API_KEY>"
+powerdns_exporter -api-url="http://<HOST>:<API-PORT>/api/v1/" -api-key="<YOUR_API_KEY>"
 ```
 
 Show help:

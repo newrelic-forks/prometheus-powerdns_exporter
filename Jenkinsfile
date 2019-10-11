@@ -46,6 +46,7 @@ stage('upload') {
       }
     } else {
       echo "Skipping, not master branch"
+    }
   }
 }
 

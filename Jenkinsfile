@@ -18,7 +18,8 @@ stage('compile') {
         docker.image('golang:latest').inside('-u 0:0') {
           sh '''
             WORKSPACE=`pwd`
-            mv powerdns_exporter /go/src
+            mkdir /go/src/powerdns_exporter
+            mv * /go/src/powerdns_exporter
             cd /go/src/powerdns_exporter
             go get
             go build

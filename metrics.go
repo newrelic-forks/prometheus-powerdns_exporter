@@ -162,7 +162,7 @@ var (
 				"overload-drops":     "backend_overload",
 				"udp-recvbuf-errors": "recvbuf_errors",
 				"udp-sndbuf-errors":  "sndbuf_errors",
-				"udp-in-errors":      "udo_in_errors",
+				"udp-in-errors":      "udp_in_errors",
 				"udp-noport-errors":  "udp_noport_errors"},
 		},
 		counterDefinition{

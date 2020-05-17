@@ -2,7 +2,7 @@ package main
 
 import (
 	"encoding/json"
-	"flag"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -16,12 +16,18 @@ import (
 	"syscall"
 	"time"
 
-	"errors"
+	hashiver "github.com/hashicorp/go-version"
 
-	"github.com/hashicorp/go-version"
+	"gopkg.in/alecthomas/kingpin.v2"
+
+	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/log/level"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/prometheus/common/log"
+	"github.com/prometheus/common/promlog"
+	"github.com/prometheus/common/promlog/flag"
+	"github.com/prometheus/common/version"
 )
 
 const (
@@ -123,6 +129,7 @@ type Exporter struct {
 	ServerType string
 	APIKey     string
 	mutex      sync.RWMutex
+	logger     log.Logger
 
 	up                   prometheus.Gauge
 	totalScrapes         prometheus.Counter
@@ -148,7 +155,7 @@ func newGaugeMetric(serverType, metricName, docString string) prometheus.Gauge {
 }
 
 // NewExporter returns an initialized Exporter.
-func NewExporter(apiKey, serverType string, serverVersion *version.Version, hostURL *url.URL) *Exporter {
+func NewExporter(apiKey, serverType string, serverVersion *hashiver.Version, hostURL *url.URL, logger log.Logger) *Exporter {
 	var gaugeDefs []gaugeDefinition
 	var counterDefs []counterDefinition
 	var simpleCounterDefs []simpleCounterDefinition
@@ -165,7 +172,7 @@ func NewExporter(apiKey, serverType string, serverVersion *version.Version, host
 	case "authoritative":
 		gaugeDefs = authoritativeGaugeDefs
 		counterDefs = authoritativeCounterDefs
-		var v42, _ = version.NewVersion("4.2.0")
+		var v42, _ = hashiver.NewVersion("4.2.0")
 		if serverVersion.GreaterThanOrEqual(v42) {
 			simpleCounterDefs = authoritativeSimpleCounterDefs
 		}
@@ -208,6 +215,7 @@ func NewExporter(apiKey, serverType string, serverVersion *version.Version, host
 		HostURL:    hostURL,
 		ServerType: serverType,
 		APIKey:     apiKey,
+		logger:     logger,
 		up: prometheus.NewGauge(prometheus.GaugeOpts{
 			Namespace: namespace,
 			Subsystem: serverType,
@@ -275,7 +283,7 @@ func (e *Exporter) scrape() []StatsEntry {
 	if err != nil {
 		e.up.Set(0)
 		e.jsonParseFailures.Inc()
-		log.Errorf("Error scraping PowerDNS: %v", err)
+		level.Error(e.logger).Log("msg", "Error scraping PowerDNS", "err", err)
 		return nil
 	}
 
@@ -309,7 +317,7 @@ func (e *Exporter) collectMetrics(ch chan<- prometheus.Metric, stats []StatsEntr
 			e.gaugeMetrics[def.id].Set(value)
 			ch <- e.gaugeMetrics[def.id]
 		} else {
-			log.Errorf("Expected PowerDNS stats key not found: %s", def.key)
+			level.Error(e.logger).Log("msg", "Expected PowerDNS stats key not found", "key", def.key)
 			e.jsonParseFailures.Inc()
 		}
 	}
@@ -320,7 +328,7 @@ func (e *Exporter) collectMetrics(ch chan<- prometheus.Metric, stats []StatsEntr
 				ch <- prometheus.MustNewConstMetric(e.simpleCounterMetrics[def.id], prometheus.CounterValue, item.Value, item.Name)
 			}
 		} else {
-			log.Errorf("Expected PowerDNS stats key not found: %s", def.key)
+			level.Error(e.logger).Log("msg", "Expected PowerDNS stats key not found", "key", def.key)
 			e.jsonParseFailures.Inc()
 		}
 	}
@@ -330,7 +338,7 @@ func (e *Exporter) collectMetrics(ch chan<- prometheus.Metric, stats []StatsEntr
 			if value, ok := statsMap[key]; ok {
 				ch <- prometheus.MustNewConstMetric(e.counterMetrics[def.id], prometheus.CounterValue, float64(value), label)
 			} else {
-				log.Errorf("Expected PowerDNS stats key not found: %s", key)
+				level.Error(e.logger).Log("msg", "Expected PowerDNS stats key not found", "key", key)
 				e.jsonParseFailures.Inc()
 			}
 		}
@@ -339,7 +347,7 @@ func (e *Exporter) collectMetrics(ch chan<- prometheus.Metric, stats []StatsEntr
 	if e.ServerType == "recursor" {
 		h, err := makeRecursorRTimeHistogram(statsMap)
 		if err != nil {
-			log.Errorf("Could not create response time histogram: %v", err)
+			level.Error(e.logger).Log("msg", "Could not create response time histogram", "err", err)
 			return
 		}
 		ch <- h
@@ -394,32 +402,37 @@ func apiURL(hostURL *url.URL, path string) string {
 
 func main() {
 	var (
-		listenAddress = flag.String("listen-address", ":9120", "Address to listen on for web interface and telemetry.")
-		metricsPath   = flag.String("metric-path", "/metrics", "Path under which to expose metrics.")
-		apiURL        = flag.String("api-url", "http://localhost:8081/api/v1/", "Base-URL of PowerDNS authoritative server/recursor API.")
-		apiKey        = flag.String("api-key", "", "PowerDNS API Key")
+		listenAddress = kingpin.Flag("listen-address", "Address to listen on for web interface and telemetry.").Default(":9120").String()
+		metricsPath   = kingpin.Flag("metric-path", "Path under which to expose metrics.").Default("/metrics").String()
+		apiURL        = kingpin.Flag("api-url", "Base-URL of PowerDNS authoritative server/recursor API.").Default("http://localhost:8081/api/v1/").String()
+		apiKey        = kingpin.Flag("api-key", "PowerDNS API Key").Default("").String()
 	)
-	flag.Parse()
+	promlogConfig := &promlog.Config{}
+	flag.AddFlags(kingpin.CommandLine, promlogConfig)
+	kingpin.Version(version.Print("powerdns_exporter"))
+	kingpin.HelpFlag.Short('h')
+	kingpin.Parse()
+	logger := promlog.New(promlogConfig)
 
 	hostURL, err := url.Parse(*apiURL)
 	if err != nil {
-		log.Fatalf("Error parsing api-url: %v", err)
+		level.Error(logger).Log("msg", "Error parsing api-url", "err", err)
 	}
 
 	server, err := getServerInfo(hostURL, *apiKey)
 	if err != nil {
-		log.Fatalf("Could not fetch PowerDNS server info: %v", err)
+		level.Error(logger).Log("msg", "Could not fetch PowerDNS server info", "err", err)
 	}
 
-	version, err := version.NewVersion(server.Version)
+	pdnsver, err := hashiver.NewVersion(server.Version)
 	if err != nil {
-		log.Fatalf("Could not parse PowerDNS server version: %v", err)
+		level.Error(logger).Log("msg", "Could not parse PowerDNS server version", "err", err)
 	}
 
-	exporter := NewExporter(*apiKey, server.DaemonType, version, hostURL)
+	exporter := NewExporter(*apiKey, server.DaemonType, pdnsver, hostURL, logger)
 	prometheus.MustRegister(exporter)
 
-	log.Infof("Starting Server: %s", *listenAddress)
+	level.Info(logger).Log("msg", "Starting Server", "ip", *listenAddress)
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
@@ -436,7 +449,7 @@ func main() {
 	})
 
 	go func() {
-		log.Fatal(http.ListenAndServe(*listenAddress, nil))
+		level.Error(logger).Log("msg", "Error starting", "err", http.ListenAndServe(*listenAddress, nil))
 	}()
 
 	<-stop

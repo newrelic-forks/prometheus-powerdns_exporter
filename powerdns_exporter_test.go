@@ -13,6 +13,7 @@ import (
 	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/go-kit/kit/log"
 	"github.com/hashicorp/go-version"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
@@ -67,7 +68,7 @@ func TestServerWithoutChecks(t *testing.T) {
 	hostURL, _ := url.Parse(h.URL)
 	v41, _ := version.NewVersion("4.1.0")
 
-	e := NewExporter("12345", "recursor", v41, hostURL)
+	e := NewExporter("12345", "recursor", v41, hostURL, log.NewNopLogger())
 
 	ch := make(chan prometheus.Metric)
 
@@ -105,7 +106,7 @@ func TestServerWithoutChecks_Error_BrokenJSONResult(t *testing.T) {
 	hostURL, _ := url.Parse(h.URL)
 	v41, _ := version.NewVersion("4.1.0")
 
-	e := NewExporter("12345", "recursor", v41, hostURL)
+	e := NewExporter("12345", "recursor", v41, hostURL, log.NewNopLogger())
 
 	ch := make(chan prometheus.Metric)
 
@@ -170,7 +171,7 @@ func TestCollectAuthoritativeMetrics41(t *testing.T) {
 	hostURL, _ := url.Parse(h.URL)
 	v41, _ := version.NewVersion("4.1.0")
 
-	e := NewExporter("12345", "authoritative", v41, hostURL)
+	e := NewExporter("12345", "authoritative", v41, hostURL, log.NewNopLogger())
 
 	testCases := []struct {
 		metricName string
@@ -217,7 +218,7 @@ func TestCollectAuthoritativeMetrics42(t *testing.T) {
 	hostURL, _ := url.Parse(h.URL)
 	v42, _ := version.NewVersion("4.2.0")
 
-	e := NewExporter("12345", "authoritative", v42, hostURL)
+	e := NewExporter("12345", "authoritative", v42, hostURL, log.NewNopLogger())
 
 	testCases := []struct {
 		metricName string
@@ -270,7 +271,7 @@ func BenchmarkExtract(b *testing.B) {
 	hostURL, _ := url.Parse(h.URL)
 	v41, _ := version.NewVersion("4.1.0")
 
-	e := NewExporter("12345", "recursor", v41, hostURL)
+	e := NewExporter("12345", "recursor", v41, hostURL, log.NewNopLogger())
 
 	var before, after runtime.MemStats
 	runtime.GC()

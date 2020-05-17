@@ -13,9 +13,9 @@ import (
 	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/hashicorp/go-version"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
-	"github.com/hashicorp/go-version"
 )
 
 type pdns struct {
@@ -89,7 +89,7 @@ func TestServerWithoutChecks(t *testing.T) {
 		t.Errorf("expected %f csv parse failures, got %f", expect, got)
 	}
 	// Suck up the remaining metrics.
-	for _ = range ch {
+	for range ch {
 	}
 }
 
@@ -120,7 +120,7 @@ func TestServerWithoutChecks_Error_BrokenJSONResult(t *testing.T) {
 		t.Errorf("expected %f up, got %f", expect, got)
 	}
 	// Suck up the remaining metrics.
-	for _ = range ch {
+	for range ch {
 	}
 }
 
@@ -146,8 +146,8 @@ func TestParseServerInfo(t *testing.T) {
 		URL:        "/servers/localhost",
 		DaemonType: "recursor",
 		Version:    "3.7.3",
-		ConfigUrl:  "/servers/localhost/config{/config_setting}",
-		ZonesUrl:   "/servers/localhost/zones{/zone}",
+		ConfigURL:  "/servers/localhost/config{/config_setting}",
+		ZonesURL:   "/servers/localhost/zones{/zone}",
 	}
 
 	if !reflect.DeepEqual(want, got) {
@@ -195,7 +195,7 @@ func TestCollectAuthoritativeMetrics41(t *testing.T) {
 		},
 		{
 			metricName: "powerdns_authoritative_queries_nxdomain",
-			expected: ``,
+			expected:   ``,
 		},
 	}
 
@@ -280,7 +280,7 @@ func BenchmarkExtract(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		ch := make(chan prometheus.Metric)
 		go func(ch chan prometheus.Metric) {
-			for _ = range ch {
+			for range ch {
 			}
 		}(ch)
 

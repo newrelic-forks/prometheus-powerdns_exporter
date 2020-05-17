@@ -181,7 +181,7 @@ var (
 		},
 	}
 
-	authoritativeSimpleCounterDefs = []simpleCounterDefinition {
+	authoritativeSimpleCounterDefs = []simpleCounterDefinition{
 		simpleCounterDefinition{
 			1, "response_sizes", "Size distribution of responses", "size", "response-sizes",
 		},
@@ -239,7 +239,7 @@ func makeRecursorRTimeHistogram(statsMap map[string]float64) (prometheus.Metric,
 
 	// Convert linear buckets to cumulative buckets
 	var keys []float64
-	for k, _ := range buckets {
+	for k := range buckets {
 		keys = append(keys, k)
 	}
 	sort.Float64s(keys)

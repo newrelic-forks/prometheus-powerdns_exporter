@@ -18,10 +18,10 @@ import (
 
 	"errors"
 
+	"github.com/hashicorp/go-version"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/common/log"
-	"github.com/hashicorp/go-version"
 )
 
 const (
@@ -54,66 +54,66 @@ type ServerInfo struct {
 	URL        string `json:"url"`
 	DaemonType string `json:"daemon_type"`
 	Version    string `json:"version"`
-	ConfigUrl  string `json:"config_url"`
-	ZonesUrl   string `json:"zones_url"`
+	ConfigURL  string `json:"config_url"`
+	ZonesURL   string `json:"zones_url"`
 }
 
-// Stats entry is a container for a realy statistic item. The Item property contains the actual item.
+// StatsEntry contains the Item property which contains the actual item
 type StatsEntry struct {
-    Item interface{}
+	Item interface{}
 }
 
-// Contains a primitive statistic item that contains just one value
+// StatisticItem contains just one value
 type StatisticItem struct {
 	Name  string  `json:"name"`
 	Kind  string  `json:"type"`
 	Value float64 `json:"value,string"`
 }
 
-// Contains a ring statistic item which holds up to Size entries at max. For every entry, it holds a counter value.
+// RingStatisticItem holds up to Size entries at max. For every entry, it holds a counter value
 // Number and name of of the items can change during operation.
 type RingStatisticItem struct {
-	Name  string  `json:"name"`
-	Kind  string  `json:"type"`
-	Size int64 `json:"size,string"`
+	Name  string               `json:"name"`
+	Kind  string               `json:"type"`
+	Size  int64                `json:"size,string"`
 	Value []StatisticItemEntry `json:"value,string"`
 }
 
-// Contains a map statistic item which holds multiple values with static keys.
+// MapStatisticItem holds multiple values with static keys
 type MapStatisticItem struct {
-	Name  string  `json:"name"`
-	Kind  string  `json:"type"`
+	Name  string               `json:"name"`
+	Kind  string               `json:"type"`
 	Value []StatisticItemEntry `json:"value,string"`
 }
 
-// Actual Values of ring and map statistic items
+// StatisticItemEntry holds actual Values of ring and map statistic items
 type StatisticItemEntry struct {
 	Name  string  `json:"name"`
 	Value float64 `json:"value,string"`
 }
 
-// Used to dynamically parse statistic items based on their type
+// UnmarshalJSON dynamically parses statistic items based on their type
 func (d *StatsEntry) UnmarshalJSON(data []byte) error {
-    var typ struct {
-        Kind string `json:"type"`
-    }
+	var typ struct {
+		Kind string `json:"type"`
+	}
 
-    if err := json.Unmarshal(data, &typ); err != nil {
-        return err
-    }
+	if err := json.Unmarshal(data, &typ); err != nil {
+		return err
+	}
 
-    switch typ.Kind {
-    case "StatisticItem":
-        d.Item = new(StatisticItem)
-    case "RingStatisticItem":
-        d.Item = new(RingStatisticItem)
-    case "MapStatisticItem":
-        d.Item = new(MapStatisticItem)
+	switch typ.Kind {
+	case "StatisticItem":
+		d.Item = new(StatisticItem)
+	case "RingStatisticItem":
+		d.Item = new(RingStatisticItem)
+	case "MapStatisticItem":
+		d.Item = new(MapStatisticItem)
 	default:
 		return errors.New("Unsupported Statistic Type")
-    }
+	}
 
-    return json.Unmarshal(data, d.Item)
+	return json.Unmarshal(data, d.Item)
 }
 
 // Exporter collects PowerDNS stats from the given HostURL and exports them using
@@ -121,19 +121,19 @@ func (d *StatsEntry) UnmarshalJSON(data []byte) error {
 type Exporter struct {
 	HostURL    *url.URL
 	ServerType string
-	ApiKey     string
+	APIKey     string
 	mutex      sync.RWMutex
 
-	up                prometheus.Gauge
-	totalScrapes      prometheus.Counter
-	jsonParseFailures prometheus.Counter
-	gaugeMetrics      map[int]prometheus.Gauge
-	counterMetrics    map[int]*prometheus.Desc
-	simpleCounterMetrics    map[int]*prometheus.Desc
-	gaugeDefs         []gaugeDefinition
-	counterDefs       []counterDefinition
-	simpleCounterDefs []simpleCounterDefinition
-	client            *http.Client
+	up                   prometheus.Gauge
+	totalScrapes         prometheus.Counter
+	jsonParseFailures    prometheus.Counter
+	gaugeMetrics         map[int]prometheus.Gauge
+	counterMetrics       map[int]*prometheus.Desc
+	simpleCounterMetrics map[int]*prometheus.Desc
+	gaugeDefs            []gaugeDefinition
+	counterDefs          []counterDefinition
+	simpleCounterDefs    []simpleCounterDefinition
+	client               *http.Client
 }
 
 func newGaugeMetric(serverType, metricName, docString string) prometheus.Gauge {
@@ -157,7 +157,7 @@ func NewExporter(apiKey, serverType string, serverVersion *version.Version, host
 	counterMetrics := make(map[int]*prometheus.Desc)
 	simpleCounterMetrics := make(map[int]*prometheus.Desc)
 
-	simpleCounterDefs = []simpleCounterDefinition {}
+	simpleCounterDefs = []simpleCounterDefinition{}
 	switch serverType {
 	case "recursor":
 		gaugeDefs = recursorGaugeDefs
@@ -207,7 +207,7 @@ func NewExporter(apiKey, serverType string, serverVersion *version.Version, host
 	return &Exporter{
 		HostURL:    hostURL,
 		ServerType: serverType,
-		ApiKey:     apiKey,
+		APIKey:     apiKey,
 		up: prometheus.NewGauge(prometheus.GaugeOpts{
 			Namespace: namespace,
 			Subsystem: serverType,
@@ -226,12 +226,12 @@ func NewExporter(apiKey, serverType string, serverVersion *version.Version, host
 			Name:      "exporter_json_parse_failures",
 			Help:      "Number of errors while parsing PowerDNS JSON stats.",
 		}),
-		gaugeMetrics:   gaugeMetrics,
-		counterMetrics: counterMetrics,
+		gaugeMetrics:         gaugeMetrics,
+		counterMetrics:       counterMetrics,
 		simpleCounterMetrics: simpleCounterMetrics,
-		gaugeDefs:      gaugeDefs,
-		counterDefs:    counterDefs,
-		simpleCounterDefs: simpleCounterDefs,
+		gaugeDefs:            gaugeDefs,
+		counterDefs:          counterDefs,
+		simpleCounterDefs:    simpleCounterDefs,
 	}
 }
 
@@ -271,7 +271,7 @@ func (e *Exporter) scrape() []StatsEntry {
 
 	var data []StatsEntry
 	url := apiURL(e.HostURL, apiStatsEndpoint)
-	err := getJSON(url, e.ApiKey, &data)
+	err := getJSON(url, e.APIKey, &data)
 	if err != nil {
 		e.up.Set(0)
 		e.jsonParseFailures.Inc()

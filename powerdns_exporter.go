@@ -69,6 +69,12 @@ type StatsEntry struct {
 	Item interface{}
 }
 
+// StatisticItemEntry holds values of ring and map statistic items
+type StatisticItemEntry struct {
+	Name  string  `json:"name"`
+	Value float64 `json:"value,string"`
+}
+
 // StatisticItem contains just one value
 type StatisticItem struct {
 	Name  string  `json:"name"`
@@ -76,26 +82,11 @@ type StatisticItem struct {
 	Value float64 `json:"value,string"`
 }
 
-// RingStatisticItem holds up to Size entries at max. For every entry, it holds a counter value
-// Number and name of of the items can change during operation.
-type RingStatisticItem struct {
-	Name  string               `json:"name"`
-	Kind  string               `json:"type"`
-	Size  int64                `json:"size,string"`
-	Value []StatisticItemEntry `json:"value,string"`
-}
-
-// MapStatisticItem holds multiple values with static keys
-type MapStatisticItem struct {
+// StatisticCollectionItem holds ring and map statistic items
+type StatisticCollectionItem struct {
 	Name  string               `json:"name"`
 	Kind  string               `json:"type"`
 	Value []StatisticItemEntry `json:"value,string"`
-}
-
-// StatisticItemEntry holds actual Values of ring and map statistic items
-type StatisticItemEntry struct {
-	Name  string  `json:"name"`
-	Value float64 `json:"value,string"`
 }
 
 // UnmarshalJSON dynamically parses statistic items based on their type
@@ -112,9 +103,9 @@ func (d *StatsEntry) UnmarshalJSON(data []byte) error {
 	case "StatisticItem":
 		d.Item = new(StatisticItem)
 	case "RingStatisticItem":
-		d.Item = new(RingStatisticItem)
+		fallthrough
 	case "MapStatisticItem":
-		d.Item = new(MapStatisticItem)
+		d.Item = new(StatisticCollectionItem)
 	default:
 		return errors.New("Unsupported Statistic Type")
 	}
@@ -293,21 +284,32 @@ func (e *Exporter) scrape() []StatsEntry {
 
 func (e *Exporter) collectMetrics(ch chan<- prometheus.Metric, stats []StatsEntry) {
 	statsMap := make(map[string]float64)
-	simpleStatsMap := make(map[string][]StatisticItemEntry)
+	statsCollectionMap := make(map[string][]StatisticItemEntry)
 	for _, s := range stats {
 		switch item := s.Item.(type) {
 		case *StatisticItem:
 			statsMap[item.Name] = item.Value
-		case *RingStatisticItem:
-			simpleStatsMap[item.Name] = item.Value
-		case *MapStatisticItem:
-			simpleStatsMap[item.Name] = item.Value
+		case *StatisticCollectionItem:
+			statsCollectionMap[item.Name] = item.Value
 		}
 	}
-	if len(statsMap) == 0 {
-		return
+	if len(statsMap) > 0 {
+		e.processStatsMap(ch, statsMap)
 	}
+	if len(statsCollectionMap) > 0 {
+		e.processStatsCollectionMap(ch, statsCollectionMap)
+	}
+	if e.ServerType == "recursor" {
+		h, err := makeRecursorRTimeHistogram(statsMap)
+		if err != nil {
+			level.Error(e.logger).Log("msg", "Could not create response time histogram", "err", err)
+			return
+		}
+		ch <- h
+	}
+}
 
+func (e *Exporter) processStatsMap(ch chan<- prometheus.Metric, statsMap map[string]float64) {
 	for _, def := range e.gaugeDefs {
 		if value, ok := statsMap[def.key]; ok {
 			// latency gauges need to be converted from microseconds to seconds
@@ -316,17 +318,6 @@ func (e *Exporter) collectMetrics(ch chan<- prometheus.Metric, stats []StatsEntr
 			}
 			e.gaugeMetrics[def.id].Set(value)
 			ch <- e.gaugeMetrics[def.id]
-		} else {
-			level.Error(e.logger).Log("msg", "Expected PowerDNS stats key not found", "key", def.key)
-			e.jsonParseFailures.Inc()
-		}
-	}
-
-	for _, def := range e.simpleCounterDefs {
-		if items, ok := simpleStatsMap[def.key]; ok {
-			for _, item := range items {
-				ch <- prometheus.MustNewConstMetric(e.simpleCounterMetrics[def.id], prometheus.CounterValue, item.Value, item.Name)
-			}
 		} else {
 			level.Error(e.logger).Log("msg", "Expected PowerDNS stats key not found", "key", def.key)
 			e.jsonParseFailures.Inc()
@@ -343,14 +334,19 @@ func (e *Exporter) collectMetrics(ch chan<- prometheus.Metric, stats []StatsEntr
 			}
 		}
 	}
+}
 
-	if e.ServerType == "recursor" {
-		h, err := makeRecursorRTimeHistogram(statsMap)
-		if err != nil {
-			level.Error(e.logger).Log("msg", "Could not create response time histogram", "err", err)
-			return
+func (e *Exporter) processStatsCollectionMap(ch chan<- prometheus.Metric, statsCollectionMap map[string][]StatisticItemEntry) {
+
+	for _, def := range e.simpleCounterDefs {
+		if items, ok := statsCollectionMap[def.key]; ok {
+			for _, item := range items {
+				ch <- prometheus.MustNewConstMetric(e.simpleCounterMetrics[def.id], prometheus.CounterValue, item.Value, item.Name)
+			}
+		} else {
+			level.Error(e.logger).Log("msg", "Expected PowerDNS stats key not found", "key", def.key)
+			e.jsonParseFailures.Inc()
 		}
-		ch <- h
 	}
 }
 

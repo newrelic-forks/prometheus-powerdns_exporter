@@ -69,75 +69,75 @@ var (
 // PowerDNS recursor metrics definitions
 var (
 	recursorGaugeDefs = []gaugeDefinition{
-		gaugeDefinition{1, "latency_average_seconds", "Exponential moving average of question-to-answer latency.", "qa-latency"},
-		gaugeDefinition{2, "concurrent_queries", "Number of concurrent queries.", "concurrent-queries"},
-		gaugeDefinition{3, "cache_size", "Number of entries in the cache.", "cache-entries"},
+		{1, "latency_average_seconds", "Exponential moving average of question-to-answer latency.", "qa-latency"},
+		{2, "concurrent_queries", "Number of concurrent queries.", "concurrent-queries"},
+		{3, "cache_size", "Number of entries in the cache.", "cache-entries"},
 	}
 
 	recursorCounterDefs = []counterDefinition{
-		counterDefinition{
+		{
 			1, "incoming_queries_total", "Total number of incoming queries by network.", "net",
 			map[string]string{"questions": "udp", "tcp-questions": "tcp"},
 		},
-		counterDefinition{
+		{
 			2, "outgoing_queries_total", "Total number of outgoing queries by network.", "net",
 			map[string]string{"all-outqueries": "udp", "tcp-outqueries": "tcp"},
 		},
-		counterDefinition{
+		{
 			3, "cache_lookups_total", "Total number of cache lookups by result.", "result",
 			map[string]string{"cache-hits": "hit", "cache-misses": "miss"},
 		},
-		counterDefinition{4, "answers_rcodes_total", "Total number of answers by response code.", "rcode", rCodeLabelMap},
-		counterDefinition{5, "answers_rtime_total", "Total number of answers grouped by response time slots.", "timeslot", rTimeLabelMap},
-		counterDefinition{6, "exceptions_total", "Total number of exceptions by error.", "error", exceptionsLabelMap},
+		{4, "answers_rcodes_total", "Total number of answers by response code.", "rcode", rCodeLabelMap},
+		{5, "answers_rtime_total", "Total number of answers grouped by response time slots.", "timeslot", rTimeLabelMap},
+		{6, "exceptions_total", "Total number of exceptions by error.", "error", exceptionsLabelMap},
 	}
 )
 
 // PowerDNS authoritative server metrics definitions
 var (
 	authoritativeGaugeDefs = []gaugeDefinition{
-		gaugeDefinition{1, "security_status", "PDNS Server Security status based on security-status.secpoll.powerdns.com", "security-status"},
-		gaugeDefinition{2, "latency_average_seconds", "Average number of microseconds a packet spends within PowerDNS", "latency"},
-		gaugeDefinition{3, "packet_cache_size", "Number of entries in the packet cache.", "packetcache-size"},
-		gaugeDefinition{4, "signature_cache_size", "Number of entries in the signature cache.", "signature-cache-size"},
-		gaugeDefinition{5, "key_cache_size", "Number of entries in the key cache.", "key-cache-size"},
-		gaugeDefinition{6, "metadata_cache_size", "Number of entries in the metadata cache.", "meta-cache-size"},
-		gaugeDefinition{7, "qsize", "Number of packets waiting for database attention.", "qsize-q"},
+		{1, "security_status", "PDNS Server Security status based on security-status.secpoll.powerdns.com", "security-status"},
+		{2, "latency_average_seconds", "Average number of microseconds a packet spends within PowerDNS", "latency"},
+		{3, "packet_cache_size", "Number of entries in the packet cache.", "packetcache-size"},
+		{4, "signature_cache_size", "Number of entries in the signature cache.", "signature-cache-size"},
+		{5, "key_cache_size", "Number of entries in the key cache.", "key-cache-size"},
+		{6, "metadata_cache_size", "Number of entries in the metadata cache.", "meta-cache-size"},
+		{7, "qsize", "Number of packets waiting for database attention.", "qsize-q"},
 	}
 	authoritativeCounterDefs = []counterDefinition{
-		counterDefinition{
+		{
 			1, "incoming_notifications", "Number of NOTIFY packets that were received", "type",
 			map[string]string{},
 		},
-		counterDefinition{
+		{
 			2, "uptime", "Uptime in seconds of the daemon", "type",
 			map[string]string{"uptime": "seconds"},
 		},
-		counterDefinition{
+		{
 			3, "dnssec", "DNSSEC counters", "type",
 			map[string]string{"signatures": "signatures_created", "udp-do-queries": "ok_queries_recv"},
 		},
-		counterDefinition{
+		{
 			4, "packet_cache_lookup", "Packet cache lookups by result", "result",
 			map[string]string{"packetcache-hit": "hit", "packetcache-miss": "miss"},
 		},
-		counterDefinition{
+		{
 			5, "query_cache_lookup", "Query cache lookups by result", "result",
 			map[string]string{"query-cache-hit": "hit", "query-cache-miss": "miss"},
 		},
-		counterDefinition{
+		{
 			6, "deferred_cache_actions", "Deferred cache actions because of maintenance by type", "type",
 			map[string]string{"deferred-cache-inserts": "inserts", "deferred-cache-lookup": "lookups"},
 		},
-		counterDefinition{
+		{
 			7, "dnsupdate_queries_total", "Total number of DNS update queries by status.", "status",
 			map[string]string{"dnsupdate-answers": "answered", "dnsupdate-changes": "applied", "dnsupdate-queries": "requested", "dnsupdate-refused": "refused"},
 		},
-		counterDefinition{
+		{
 			8, "recursive_queries_total", "Total number of recursive queries by status.", "status",
 			map[string]string{"rd-queries": "requested", "recursing-questions": "processed", "recursing-answers": "answered", "recursion-unanswered": "unanswered"},
 		},
-		counterDefinition{
+		{
 			9, "queries_total", "Total number of queries by protocol.", "proto",
 			map[string]string{"tcp-queries": "tcp",
 				"tcp4-queries": "tcp4",
@@ -146,7 +146,7 @@ var (
 				"udp4-queries": "udp4",
 				"udp6-queries": "udp6"},
 		},
-		counterDefinition{
+		{
 			10, "answers_total", "Total number of answers by protocol.", "proto",
 			map[string]string{"tcp-answers": "tcp",
 				"tcp4-answers": "tcp4",
@@ -155,7 +155,7 @@ var (
 				"udp4-answers": "udp4",
 				"udp6-answers": "udp6"},
 		},
-		counterDefinition{
+		{
 			11, "answers_bytes_total", "Total number of answer bytes sent over by protocol.", "proto",
 			map[string]string{"tcp-answers-bytes": "tcp",
 				"tcp4-answers-bytes": "tcp4",
@@ -164,7 +164,7 @@ var (
 				"udp4-answers-bytes": "udp4",
 				"udp6-answers-bytes": "udp6"},
 		},
-		counterDefinition{
+		{
 			12, "exceptions_total", "Total number of exceptions by error.", "error",
 			map[string]string{"servfail-packets": "servfail",
 				"timedout-packets":   "timeout",
@@ -175,41 +175,41 @@ var (
 				"udp-in-errors":      "udp_in_errors",
 				"udp-noport-errors":  "udp_noport_errors"},
 		},
-		counterDefinition{
+		{
 			13, "cpu_utilisation", "Number of CPU milliseconds spent in user, and kernel space", "type",
 			map[string]string{"sys-msec": "sys", "user-msec": "user"},
 		},
 	}
 
 	authoritativeSimpleCounterDefs = []simpleCounterDefinition{
-		simpleCounterDefinition{
+		{
 			1, "response_sizes", "Size distribution of responses", "size", "response-sizes",
 		},
-		simpleCounterDefinition{
+		{
 			2, "response_rcodes", "Distribution of rcodes", "rcode", "response-by-rcode",
 		},
-		simpleCounterDefinition{
+		{
 			3, "remote_queries", "Remote server IP addresses", "remote", "remotes",
 		},
-		simpleCounterDefinition{
+		{
 			4, "remote_queries_unauth", "Remote hosts querying domains for which we are not auth", "remote", "remotes-unauth",
 		},
-		simpleCounterDefinition{
+		{
 			5, "remote_queries_corrupt", "Remote hosts sending corrupt packets", "remote", "remotes-corrupt",
 		},
-		simpleCounterDefinition{
+		{
 			6, "queries", "UDP Queries Received", "record", "queries",
 		},
-		simpleCounterDefinition{
+		{
 			7, "queries_noerror", "Queries for existing records, but for type we don't have", "record", "noerror-queries",
 		},
-		simpleCounterDefinition{
+		{
 			8, "queries_unauth", "Queries for domains that we are not authoritative for", "record", "unauth-queries",
 		},
-		simpleCounterDefinition{
+		{
 			9, "queries_nxdomain", "Queries for non-existent records within existent domains", "record", "nxdomain-queries",
 		},
-		simpleCounterDefinition{
+		{
 			10, "queries_servfail", "Queries that could not be answered due to backend errors", "record", "servfail-queries",
 		},
 	}

@@ -122,16 +122,19 @@ type Exporter struct {
 	mutex      sync.RWMutex
 	logger     log.Logger
 
-	up                   prometheus.Gauge
-	totalScrapes         prometheus.Counter
-	jsonParseFailures    prometheus.Counter
-	gaugeMetrics         map[int]prometheus.Gauge
+	client *http.Client
+
+	up                prometheus.Gauge
+	totalScrapes      prometheus.Counter
+	jsonParseFailures prometheus.Counter
+
+	gaugeDefs    []gaugeDefinition
+	gaugeMetrics map[int]prometheus.Gauge
+
+	counterDefs          []counterDefinition
 	counterMetrics       map[int]*prometheus.Desc
 	simpleCounterMetrics map[int]*prometheus.Desc
-	gaugeDefs            []gaugeDefinition
-	counterDefs          []counterDefinition
 	simpleCounterDefs    []simpleCounterDefinition
-	client               *http.Client
 }
 
 func newGaugeMetric(serverType, metricName, docString string) prometheus.Gauge {

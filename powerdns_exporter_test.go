@@ -1,10 +1,10 @@
 package main
 
 import (
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"reflect"
 	"runtime"
 	"strings"
@@ -13,7 +13,7 @@ import (
 	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/go-kit/kit/log"
+	"github.com/go-kit/log"
 	"github.com/hashicorp/go-version"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
@@ -36,12 +36,6 @@ func handler(h *pdns) http.HandlerFunc {
 	}
 }
 
-func handlerStale(exit chan bool) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		<-exit
-	}
-}
-
 func readCounter(m prometheus.Counter) float64 {
 	// TODO: Revisit this once client_golang offers better testing tools.
 	pb := &dto.Metric{}
@@ -57,7 +51,7 @@ func readGauge(m prometheus.Gauge) float64 {
 }
 
 func TestServerWithoutChecks(t *testing.T) {
-	config, err := ioutil.ReadFile("test/recursor_stats.json")
+	config, err := os.ReadFile("test/recursor_stats.json")
 	if err != nil {
 		t.Fatalf("could not read config file: %v", err.Error())
 	}
@@ -95,7 +89,7 @@ func TestServerWithoutChecks(t *testing.T) {
 }
 
 func TestServerWithoutChecks_Error_BrokenJSONResult(t *testing.T) {
-	config, err := ioutil.ReadFile("test/recursor_broken_result.json")
+	config, err := os.ReadFile("test/recursor_broken_result.json")
 	if err != nil {
 		t.Fatalf("could not read config file: %v", err.Error())
 	}
@@ -126,7 +120,7 @@ func TestServerWithoutChecks_Error_BrokenJSONResult(t *testing.T) {
 }
 
 func TestParseServerInfo(t *testing.T) {
-	config, err := ioutil.ReadFile("test/recursor_info.json")
+	config, err := os.ReadFile("test/recursor_info.json")
 	if err != nil {
 		t.Fatalf("could not read config file: %v", err.Error())
 	}
@@ -160,7 +154,7 @@ func TestParseServerInfo(t *testing.T) {
 }
 
 func TestCollectAuthoritativeMetrics41(t *testing.T) {
-	config, err := ioutil.ReadFile("test/authoritative_stats_41.json")
+	config, err := os.ReadFile("test/authoritative_stats_41.json")
 	if err != nil {
 		t.Fatalf("could not read config file: %v", err.Error())
 	}
@@ -207,7 +201,7 @@ func TestCollectAuthoritativeMetrics41(t *testing.T) {
 }
 
 func TestCollectAuthoritativeMetrics42(t *testing.T) {
-	config, err := ioutil.ReadFile("test/authoritative_stats_42.json")
+	config, err := os.ReadFile("test/authoritative_stats_42.json")
 	if err != nil {
 		t.Fatalf("could not read config file: %v", err.Error())
 	}
@@ -260,7 +254,7 @@ func TestCollectAuthoritativeMetrics42(t *testing.T) {
 }
 
 func BenchmarkExtract(b *testing.B) {
-	config, err := ioutil.ReadFile("test/recursor_stats.json")
+	config, err := os.ReadFile("test/recursor_stats.json")
 	if err != nil {
 		b.Fatalf("could not read config file: %v", err.Error())
 	}

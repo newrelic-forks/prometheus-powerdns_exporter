@@ -228,7 +228,7 @@ func makeRecursorRTimeHistogram(statsMap map[string]float64) (prometheus.Metric,
 	var count uint64
 	for k, v := range rTimeBucketMap {
 		if _, ok := statsMap[k]; !ok {
-			return nil, fmt.Errorf("Required PowerDNS stats key not found: %s", k)
+			return nil, fmt.Errorf("required PowerDNS stats key not found: %s", k)
 		}
 		value := statsMap[k]
 		if v != 0 {

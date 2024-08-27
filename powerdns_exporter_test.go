@@ -188,16 +188,15 @@ func TestCollectAuthoritativeMetrics41(t *testing.T) {
 				powerdns_authoritative_latency_average_seconds 0.001308
 			`,
 		},
-		{
-			metricName: "powerdns_authoritative_queries_nxdomain",
-			expected:   ``,
-		},
 	}
 
 	for _, tc := range testCases {
 		err = testutil.CollectAndCompare(e, strings.NewReader(tc.expected), tc.metricName)
 		assert.NoError(t, err)
 	}
+
+	err = testutil.CollectAndCompare(e, strings.NewReader(""), "powerdns_authoritative_queries_nxdomain")
+	assert.Error(t, err)
 }
 
 func TestCollectAuthoritativeMetrics42(t *testing.T) {

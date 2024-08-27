@@ -6,11 +6,6 @@
 
 Periodically scrapes metrics via the [PowerDNS HTTP-API](https://doc.powerdns.com/md/httpapi/README/) and exports them via HTTP/JSON for consumption by Prometheus.
 
-#### The following PowerDNS products are supported
-* [Authoritative Server](https://www.powerdns.com/auth.html)
-* [Recursor](https://www.powerdns.com/recursor.html)
-* [Dnsdist](http://dnsdist.org/) (coming soon)
-
 ---
 
 ## Flags
@@ -29,18 +24,7 @@ The `api-url` flag value should be passed in this format:
 
 ## Building
 
-```bash
-git clone https://github.com/fuze/powerdns_exporter.git
-cd powerdns_exporter
-docker run -it -v $(pwd):/powerdns_exporter golang:1.12 /bin/bash
-cd /powerdns_exporter
-go get github.com/prometheus/client_golang/prometheus
-go get github.com/sirupsen/logrus
-go get gopkg.in/alecthomas/kingpin.v2
-make build
-```
-
-A Makefile is provided in case you find a need for it.
+It is automated with goreleaser.
 
 ## Usage
 

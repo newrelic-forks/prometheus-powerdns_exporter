@@ -3,8 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
-	"io/ioutil"
+	"io"
 	"net"
 	"net/http"
 	_ "net/http/pprof"
@@ -18,10 +17,10 @@ import (
 
 	hashiver "github.com/hashicorp/go-version"
 
-	"gopkg.in/alecthomas/kingpin.v2"
+	"github.com/alecthomas/kingpin/v2"
 
-	"github.com/go-kit/kit/log"
-	"github.com/go-kit/kit/log/level"
+	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -107,7 +106,7 @@ func (d *StatsEntry) UnmarshalJSON(data []byte) error {
 	case "MapStatisticItem":
 		d.Item = new(StatisticCollectionItem)
 	default:
-		return errors.New("Unsupported Statistic Type")
+		return errors.New("unsupported Statistic Type")
 	}
 
 	return json.Unmarshal(data, d.Item)
@@ -121,8 +120,6 @@ type Exporter struct {
 	APIKey     string
 	mutex      sync.RWMutex
 	logger     log.Logger
-
-	client *http.Client
 
 	up                prometheus.Gauge
 	totalScrapes      prometheus.Counter
@@ -379,11 +376,11 @@ func getJSON(url, apiKey string, data interface{}) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		content, err := ioutil.ReadAll(resp.Body)
+		content, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return err
 		}
-		return fmt.Errorf(string(content))
+		return errors.New(string(content))
 	}
 
 	if err := json.NewDecoder(resp.Body).Decode(data); err != nil {
